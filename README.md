@@ -50,9 +50,59 @@ php artisan serve             # http://127.0.0.1:8000
 - `php artisan migrate:fresh --seeder=VerificacionSeeder` carga **solo** la semilla de verificación (la que se usa en la defensa).
 - `php artisan test` corre las pruebas unitarias de NIT, teléfono y mes de Guatemala.
 
-### 3. API y 4. SPA
+### 3. API REST
 
-Pendientes (los pasos se agregarán cuando existan `api/` y `frontend/`).
+```bash
+cd api
+npm install
+cp .env.example .env          # DB_PASSWORD, JWT_SECRET (≥ 32 caracteres aleatorios) y CORS_ORIGIN
+npm run dev                   # http://localhost:3000/api
+npm test                      # pruebas de NIT y teléfono
+```
+
+Comprobación de A1–A3 (con solo la semilla de verificación cargada; modifica datos):
+
+```bash
+# Git Bash
+cd api
+CLAVE_SEMILLA=Ventas2026 node --env-file=.env scripts/verificar-a1-a3.mjs
+```
+
+```powershell
+# PowerShell
+cd api
+$env:CLAVE_SEMILLA = "Ventas2026"
+node --env-file=.env scripts/verificar-a1-a3.mjs
+```
+
+| Método | Ruta | Estado |
+|---|---|---|
+| POST | /auth/login | Hecho |
+| GET | /productos | Hecho |
+| GET | /clientes?q= | Hecho |
+| POST | /clientes | Hecho |
+| GET | /clientes/disponibles | Hecho |
+| POST | /clientes/:id/tomar | Hecho |
+| GET | /clientes/:id | Hecho |
+| PATCH | /clientes/:id | Hecho |
+| POST | /clientes/:id/actividades | Pendiente |
+| GET | /actividades?estado= | Pendiente |
+| PATCH | /actividades/:id | Pendiente |
+| GET | /oportunidades?etapa= | Pendiente |
+| POST | /oportunidades | Pendiente |
+| GET | /oportunidades/:id | Pendiente |
+| PATCH | /oportunidades/:id | Pendiente |
+| PATCH | /oportunidades/:id/etapa | Pendiente |
+| POST | /oportunidades/:id/productos | Pendiente |
+| PATCH | /oportunidades/:id/productos/:lineaId | Pendiente |
+| DELETE | /oportunidades/:id/productos/:lineaId | Pendiente |
+| GET | /reportes/resumen?mes= | Pendiente |
+
+Cuerpos, respuestas y códigos de error: sección 5 de [docs/especificacion.md](docs/especificacion.md).
+
+### 4. SPA
+
+Pendiente. Lo que falta del proyecto está detallado en [docs/continuacion.md](docs/continuacion.md).
 
 ## Cuentas de prueba
 

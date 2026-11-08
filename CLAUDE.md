@@ -16,7 +16,7 @@ Pareja: Keneth López (panel Laravel, especificación) y Jaime Orozco (API y SPA
 | Pieza | Carpeta | Quién | Tecnología |
 |---|---|---|---|
 | Panel | `laravel/` | administrador, supervisor | Laravel 13 + Breeze (Blade) + Eloquent |
-| API REST | `api/` (pendiente) | vendedor (vía SPA) | Node 24 + Express 5 + mysql2 + jsonwebtoken + **bcryptjs** + cors |
+| API REST | `api/` (A1–A3 hechos; A4–A8 pendientes) | vendedor (vía SPA) | Node 24 + Express 5 + mysql2 + jsonwebtoken + **bcryptjs** + cors |
 | SPA | `frontend/` (pendiente) | vendedor | HTML + Bootstrap 5.3 + JS con módulos, sin framework |
 
 - Una sola base **MySQL 8.4** (`crm_computadoras`). Solo Laravel crea o modifica tablas (migraciones); la API nunca ejecuta CREATE/ALTER. **Nunca edites una migración que ya está en Git: crea una nueva.**
@@ -52,6 +52,21 @@ Las pruebas de Feature con base de datos no se usan: phpunit trae SQLite y las m
 - Las cotizaciones son de solo lectura en el panel.
 - Vocabulario del sector en `lang/es/crm.php` (cotizaciones, seguimientos, asesor, jefe de tienda, etapas). Mensajes de validación en `lang/es/validation.php`.
 - Capa de sector: columna `productos.categoria` (nullable). Regla propia **RS-1**: una cotización con equipos solo se gana con garantías ≥ equipos; se cumple en la API (409).
+
+## API (desde `api/`)
+
+```bash
+npm run dev                                            # http://localhost:3000/api (node --env-file=.env --watch)
+npm test                                               # node:test (NIT y teléfono, mismos casos que Laravel)
+node --test test/identidad.test.js                     # un solo archivo de pruebas
+CLAVE_SEMILLA=<ver README> node --env-file=.env scripts/verificar-a1-a3.mjs   # A1–A3 + concurrencia
+```
+
+- `src/app.js`: cors (origen exacto) → `express.json` → `/api/auth` → `autenticar` → rutas → 404 JSON → `manejadorErrores`.
+- `src/db.js`: pool y `enTransaccion(fn)`. `src/util/http.js`: `errorHttp`, `errores422`, `exigirCuerpo`, `idDeRuta`. Lanza estos errores con `throw`; Express 5 los lleva al manejador.
+- `src/validacion/identidad.js` replica `Identidad.php`; si cambias una, cambia la otra y sus pruebas.
+- Concurrencia: transacción + `SELECT ... FOR UPDATE`, bloqueando primero la fila del asesor en `users`, luego `clientes`, luego `oportunidades` (mismo orden que el panel). Duplicados: `ER_DUP_ENTRY` → 409.
+- Lo que falta y cómo hacerlo está en `docs/continuacion.md`.
 
 ## Seguridad
 

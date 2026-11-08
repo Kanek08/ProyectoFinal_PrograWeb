@@ -1,6 +1,6 @@
 # Verificación · CRM CompuPartes Xela
 
-Evidencia de que cada criterio de `docs/especificacion.md` se cumple. Este documento cubre por ahora el **panel Laravel (L1–L7)**; las secciones de la API y la SPA se agregan cuando existan.
+Evidencia de que cada criterio de `docs/especificacion.md` se cumple. Este documento cubre por ahora el **panel Laravel (L1–L7)** y la **API A1–A3**; las secciones de A4–A8 y de la SPA se agregan cuando existan.
 
 Entorno de las pruebas (2026-11-08): MySQL 8.4.8, PHP 8.5.12, Laravel 13.40.0, base cargada con `php artisan migrate:fresh --seeder=VerificacionSeeder` salvo donde se indica.
 
@@ -101,7 +101,34 @@ Inserciones directas como usuario `crm`, sin pasar por el panel:
 
 ---
 
-## 5. Bitácora de IA (P5)
+## 5. API: A1, A2 y A3
+
+Script `api/scripts/verificar-a1-a3.mjs` contra la API corriendo y solo la semilla de verificación. Resultado: **44 de 44 comprobaciones**, repetido 3 veces con la semilla recién cargada (las de concurrencia dieron lo mismo en las tres corridas). `npm test` en `api/`: 22 pruebas de NIT y teléfono, los mismos casos que Laravel.
+
+| Criterio | Evidencia | Resultado |
+|---|---|---|
+| A1.1 | Valeria → 200 `{ token, usuario: { id, nombre, correo } }` sin password ni rol | Cumple |
+| A1.2 | admin, sergio e ivan con la contraseña correcta → 403 sin token | Cumple |
+| A1.3 | Correo inexistente y contraseña incorrecta → 401 con cuerpo idéntico | Cumple |
+| A1.4 | Sin `clave` → 422 `errores.clave`; JSON mal formado → 400; sin cuerpo → 400 | Cumple |
+| A1.5 | JWT con `alg: HS256`, `sub` = id y `exp`; expiración en `JWT_EXPIRES_IN` | Cumple |
+| A2.1 | Sin token, alterado, vencido, HS512, `none` y firmado con otro secreto → 401 | Cumple |
+| A2.2 | Token bien firmado de Iván (desactivado) y de la administradora → 401 | Cumple |
+| A3.1 | Valeria ve sus 3 clientes; `?q=quetzal` y `?q=4521817-k` lo encuentran | Cumple |
+| A3.2 | Alta 201 en su cartera; 422 con un mensaje por campo; NIT o teléfono repetido → 409; `vendedor_id` del cuerpo ignorado | Cumple |
+| A3.3 | Disponibles: 6, cada uno solo con `id` y `nombre` | Cumple |
+| A3.4 | Tomar → 200; ya tomado → 409; inexistente → 404 | Cumple |
+| A3.5 | 10 tomas simultáneas del mismo cliente → 1 × 200 y 9 × 409 | Cumple |
+| A3.6 | Carlos (9 de 10): 4 tomas + 1 alta simultáneas → 1 éxito, cartera 10; la siguiente alta → 409 | Cumple |
+| A3.7 | Valeria lee y modifica un cliente de Diego → 404; id inexistente o no numérico → 404 | Cumple |
+| A3.8 | NIT NULL → `"CF"`; ninguna respuesta contiene `vendedor_id` | Cumple |
+| S3 | `?q=' OR 1=1 -- ` → 200 sin clientes; `?q=%` → solo los suyos | Cumple |
+| S6 | Preflight desde `http://127.0.0.1:8080`: la API responde `Access-Control-Allow-Origin: http://127.0.0.1:5500`, que no coincide, y el navegador bloquea. `server.js` no arranca si `CORS_ORIGIN` es `*` | Cumple |
+| S8 | Dos altas simultáneas con el mismo teléfono (asesores distintos) → una 201 y una 409 | Cumple |
+
+---
+
+## 6. Bitácora de IA (P5)
 
 Casos en que el agente (Claude Code) propuso algo incorrecto o distinto de la especificación.
 
@@ -128,3 +155,9 @@ Casos en que el agente (Claude Code) propuso algo incorrecto o distinto de la es
 - **Por qué está mal:** el enunciado exige MySQL 8.4; MariaDB no tiene `REGEXP_LIKE`, que usan los CHECK de clientes, y el panel y la API podrían terminar en bases distintas.
 - **Cómo lo detectamos:** `php artisan db:show` mostró «MariaDB 10.11».
 - **Corrección:** se detuvo MariaDB, se creó la base en MySQL 8.4 y el README advierte el problema.
+
+### Caso 5 · NIT inventado sin dígito verificador en las pruebas
+- **Qué propuso el agente:** en el script de verificación de la API usó el NIT `8104523-2` para probar el `PATCH` de un cliente, sin calcular su dígito verificador.
+- **Por qué está mal:** el dígito correcto no es 2; la API respondió 422 (lo correcto) y la prueba falló por un dato mal escrito, no por un defecto de la API. Una prueba con datos inválidos sin querer puede ocultar o inventar errores.
+- **Cómo lo detectamos:** la única falla de la primera corrida mostraba `errores.nit`.
+- **Corrección:** se calculó el dígito con `digitoVerificador()` y la prueba usa `330 1245-8`. Commit: _pendiente_.
