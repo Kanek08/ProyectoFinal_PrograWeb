@@ -1,0 +1,14 @@
+# Secretos: nunca al repositorio (S2). Cada pieza sube su .env.example.
+laravel/.env
+api/.env
+
+# Dependencias y compilados
+laravel/vendor/
+laravel/node_modules/
+api/node_modules/
+
+# Configuración local del entorno
+.claude/launch.json
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
