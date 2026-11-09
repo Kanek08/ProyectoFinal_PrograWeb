@@ -121,9 +121,25 @@ $env:CLAVE_SEMILLA = "Ventas2026"
 node --env-file=.env scripts/verificar-a4.mjs
 ```
 
-### 4. SPA
+### 4. SPA del asesor
 
-Pendiente. Lo que falta del proyecto está detallado en [docs/continuacion.md](docs/continuacion.md).
+HTML, Bootstrap 5.3 (CDN) y JavaScript con módulos, sin framework ni compilación. Con la API corriendo, sirva la carpeta `frontend/` **exactamente** en `http://127.0.0.1:5500`, el origen de `CORS_ORIGIN` en `api/.env` (S6). Desde `localhost:5500` la API la rechaza.
+
+- **VS Code:** clic derecho en `frontend/index.html` → *Open with Live Server* y abra `http://127.0.0.1:5500`.
+- **Python:** desde la raíz del repositorio, `py -m http.server 5500 --bind 127.0.0.1 --directory frontend` (en Linux o macOS, `python3`).
+
+Inicie sesión con un asesor de ventas (`valeria@crm.test`).
+
+| Pantalla | Ruta | Qué hace |
+|---|---|---|
+| Inicio de sesión | `#/login` | F1. El token se guarda en LocalStorage (lo único que se guarda ahí); un 401 en plena sesión vuelve aquí con un aviso. |
+| Cartera | `#/cartera` | F2. Clientes con búsqueda en el servidor, «n de 10», alta con errores por campo y clientes disponibles con «Tomar». |
+| Cotizaciones | `#/embudo` | F3. Una columna por etapa abierta, lista de cerradas y alta de cotizaciones. |
+| Detalle | `#/cotizacion/:id` | F3. Productos con precio cotizado y subtotal, total, historial y botones de etapa según D1; perder pide el motivo. |
+| Seguimientos | `#/seguimientos` | F4. Pendientes y completados, vencidos resaltados; la fecha local se envía con `-06:00`. |
+| Resumen | `#/resumen` | F5. Selector de mes; ventas, total, pronóstico y cartera en quetzales. |
+
+Estructura: `js/main.js` (enrutador por hash y delegación de eventos), `js/estado.js` (estado único y `render()`), `js/api.js` (peticiones, token, indicador de carga, 401 y API apagada), `js/utilidades.js` (`html` que escapa todo dato, `formatoQ`, `fechaGT`, `aIsoConZona`), `js/etiquetas.js` (vocabulario del sector) y `js/vistas/`.
 
 ## Cuentas de prueba
 
