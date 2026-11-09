@@ -1,0 +1,56 @@
+/* Estilos propios de la SPA. Lo demás es Bootstrap 5.3. */
+
+/* F6: usable a 375 px sin desplazamiento horizontal. */
+body {
+  min-width: 320px;
+}
+
+.text-break,
+.card-title,
+.list-group-item {
+  overflow-wrap: anywhere;
+}
+
+/* Indicador de carga fijo, arriba a la derecha. */
+.cargando {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1080;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(33, 37, 41, 0.85);
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+.cargando[hidden] {
+  display: none;
+}
+
+/* Embudo: una columna por etapa abierta. */
+.columna-etapa {
+  min-height: 6rem;
+}
+
+.columna-etapa .card {
+  border-left: 4px solid var(--bs-success);
+}
+
+/* Seguimiento vencido (F4). */
+.vencida {
+  border-left: 4px solid var(--bs-danger);
+  background: var(--bs-danger-bg-subtle);
+}
+
+.cifra {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.login {
+  max-width: 24rem;
+}

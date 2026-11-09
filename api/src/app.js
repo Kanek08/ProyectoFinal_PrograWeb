@@ -5,6 +5,9 @@ import { manejadorErrores, rutaNoEncontrada } from './middleware/errores.js';
 import { rutasAuth } from './rutas/auth.js';
 import { rutasProductos } from './rutas/productos.js';
 import { rutasClientes } from './rutas/clientes.js';
+import { rutasOportunidades } from './rutas/oportunidades.js';
+import { rutasActividades } from './rutas/actividades.js';
+import { rutasReportes } from './rutas/reportes.js';
 
 export const app = express();
 
@@ -21,7 +24,9 @@ app.use('/api/auth', rutasAuth);
 app.use('/api', autenticar);
 app.use('/api/productos', rutasProductos);
 app.use('/api/clientes', rutasClientes);
-// Pendiente (ver docs/continuacion.md): actividades, oportunidades y reportes.
+app.use('/api/oportunidades', rutasOportunidades);
+app.use('/api', rutasActividades); // /clientes/:id/actividades y /actividades
+app.use('/api/reportes', rutasReportes);
 
 app.use(rutaNoEncontrada);
 app.use(manejadorErrores);
