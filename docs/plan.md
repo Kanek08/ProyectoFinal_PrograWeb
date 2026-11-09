@@ -59,7 +59,7 @@ ProyectoFinal_PrograWeb/
 | Fase | Tarea | Responsable | Estado | Evidencia |
 |---|---|---|---|---|
 | 0 · Entorno | PHP 8.3+, Composer, MySQL 8.4 (no MariaDB), Node 24; base `crm_computadoras` y usuario `crm` | Ambos, cada uno en su máquina | Hecho | `php artisan db:show` → MySQL 8.4 |
-| 1 · Especificación | Sector, regla propia RS-1, requisitos con criterios Dado/Cuando/Entonces, contrato, modelo de datos, decisiones D1–D6 | Keneth | Hecho (falta la etiqueta `spec-v1`, ver sección 5) | `docs/especificacion.md` |
+| 1 · Especificación | Sector, regla propia RS-1, requisitos con criterios Dado/Cuando/Entonces, contrato, modelo de datos, decisiones D1–D6 | Keneth | Hecho (sin etiqueta `spec-v1` separada, ver sección 5) | `docs/especificacion.md` |
 | 1 · Especificación | Archivo de reglas del agente | Keneth | Hecho | `CLAUDE.md` |
 | 2 · Panel | L1 migraciones y semillas (verificación y sector) | Keneth | Hecho | `verificacion.md` §1–3 |
 | 2 · Panel | L2 cuentas y roles con Breeze; L3 catálogo | Keneth | Hecho | `verificacion.md` §2 |
@@ -75,7 +75,8 @@ ProyectoFinal_PrograWeb/
 | 6 · Verificación | Prueba central panel ↔ SPA, seguridad en la SPA, matriz de A4–F6, este plan | Jaime | Hecho | `verificacion.md` §6–8 |
 | 6 · Verificación | Revisar la verificación completa y la bitácora; completar los commits pendientes de los casos 1–3 | Keneth | Pendiente | — |
 | 7 · Cambio de requisito | Cuando el catedrático lo publique: actualizar la especificación (`spec-v2`), planificarlo aquí e implementarlo con migraciones nuevas | Ambos | Pendiente (sin publicar) | — |
-| 8 · Entrega | Unir las ramas en `main`, etiqueta `entrega-final`, enviar enlace y `git rev-parse entrega-final` | Ambos | Pendiente | — |
+| 8 · Entrega | Unir las ramas en `main` | Jaime | Hecho | merge `98cf489` |
+| 8 · Entrega | Comprobar todo en `main`, etiqueta `entrega-final`, enviar enlace y `git rev-parse entrega-final` | Ambos | Pendiente | — |
 | 8 · Defensa | Ensayar con la base solo con la semilla de verificación, Postman abierto y el repositorio en `entrega-final`; cada uno explica todo el código | Ambos | Pendiente | — |
 
 ## 4. Qué se le pidió al agente en cada fase
@@ -96,8 +97,8 @@ El agente siempre recibió el enunciado, `CLAUDE.md` y `docs/especificacion.md` 
 
 | Tema | Qué hacer | Responsable |
 |---|---|---|
-| Etiqueta `spec-v1` | El commit `p1` trae la especificación y el panel juntos; el enunciado pide la etiqueta **antes** del código. Decidir juntos: rehacer el historial (requiere acuerdo, porque ya está compartido) o explicarlo en la defensa. | Ambos |
-| Ramas sin unir | `api-oportunidades` (A4–A8) y `spa-asesor` (F1–F6, sale de la anterior) están en GitHub, sin unir a `main`. | Ambos |
+| Etiqueta `spec-v1` | **Decidido: se deja así.** El commit `p1` trae la especificación y el panel juntos; no se reescribe el historial compartido. En la defensa se explica que la especificación se escribió primero y se subió junto con el panel en el mismo commit. | Ambos |
+| Ramas | `api-oportunidades` (A4–A8) y `spa-asesor` (F1–F6) ya están unidas en `main`. | Hecho |
 | Cambio de requisito | Sin publicar todavía. Cuando llegue: primero la especificación (`spec-v2`), luego este plan, luego migraciones nuevas. | Ambos |
 | `api/package-lock.json` | `npm install` lo cambió en una máquina; no subirlo sin revisar. | Jaime |
 | Defensa | Cada uno debe poder explicar `clientes.js`, `oportunidades.js` y `AsignacionClientes.php` (orden de bloqueo) y la plantilla `html` de la SPA. | Ambos |
