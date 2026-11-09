@@ -60,45 +60,66 @@ npm run dev                   # http://localhost:3000/api
 npm test                      # pruebas de NIT y teléfono
 ```
 
-Comprobación de A1–A3 (con solo la semilla de verificación cargada; modifica datos):
+#### Endpoints
+
+Base `http://localhost:3000/api`. Todo viaja en JSON y todas las rutas exigen `Authorization: Bearer <token>`, salvo el inicio de sesión. Solo los asesores de ventas activos pueden usar la API.
+
+| Método | Ruta | Cuerpo o parámetros | Respuesta correcta | Errores |
+|---|---|---|---|---|
+| POST | /auth/login | `{ correo, clave }` | 200 `{ token, usuario }` | 400, 401, 403, 422 |
+| GET | /productos | — | 200, productos activos | 401 |
+| GET | /clientes | `?q=` (contiene, en nombre o NIT) | 200, clientes de su cartera | 401 |
+| POST | /clientes | `{ nombre, nit, telefono, correo }`; correo opcional | 201, el cliente, ya en su cartera | 400, 401, 409, 422 |
+| GET | /clientes/disponibles | — | 200, `[{ id, nombre }]` | 401 |
+| POST | /clientes/:id/tomar | — | 200, el cliente, ya en su cartera | 401, 404, 409 |
+| GET | /clientes/:id | — | 200, el cliente | 401, 404 |
+| PATCH | /clientes/:id | Los campos que cambian | 200, el cliente | 400, 401, 404, 409, 422 |
+| POST | /clientes/:id/actividades | `{ tipo, descripcion, vence_en }`; vence_en opcional, con zona horaria | 201, la actividad | 400, 401, 404, 422 |
+| GET | /actividades | `?estado=pendiente` o `completada` | 200, actividades de los clientes de su cartera | 400, 401 |
+| PATCH | /actividades/:id | `{ completada }` (booleano) | 200, la actividad | 400, 401, 404, 422 |
+| GET | /oportunidades | `?etapa=` | 200, resumen de sus cotizaciones | 400, 401 |
+| POST | /oportunidades | `{ cliente_id, titulo }` | 201, detalle, en prospecto | 400, 401, 422 |
+| GET | /oportunidades/:id | — | 200, detalle con productos e historial | 401, 404 |
+| PATCH | /oportunidades/:id | `{ titulo }` | 200, detalle | 400, 401, 404, 409, 422 |
+| PATCH | /oportunidades/:id/etapa | `{ etapa, motivo_perdida }`; motivo solo al perder | 200, detalle | 400, 401, 404, 409, 422 |
+| POST | /oportunidades/:id/productos | `{ producto_id, cantidad }` | 201, detalle | 400, 401, 404, 409, 422 |
+| PATCH | /oportunidades/:id/productos/:lineaId | `{ cantidad }` | 200, detalle | 400, 401, 404, 409, 422 |
+| DELETE | /oportunidades/:id/productos/:lineaId | — | 204, sin cuerpo | 401, 404, 409 |
+| GET | /reportes/resumen | `?mes=AAAA-MM`; por omisión, el mes actual de Guatemala | 200 `{ mes, ventas, total, pronostico, cartera }` | 400, 401 |
+
+Formas de respuesta, transiciones de etapa (D1) y regla propia RS-1: secciones 2, 5 y 8 de [docs/especificacion.md](docs/especificacion.md).
+
+#### Colección de Postman
+
+[docs/api.postman_collection.json](docs/api.postman_collection.json): impórtela en Postman (*Import*) y córrala con el *Collection Runner*, en orden. El primer request guarda el token de la asesora en `{{token}}`. Trae una petición por endpoint, los errores 400/401/403/404/409/422, pruebas de seguridad (S3, S4, S5, A2) y la regla propia RS-1.
+
+- Con `php artisan migrate:fresh --seeder=VerificacionSeeder` pasan todas las carpetas menos **Regla propia**.
+- La carpeta **Regla propia** necesita las dos semillas: `php artisan migrate:fresh --seed`.
+- La colección cambia datos: al terminar, vuelva a cargar la semilla.
+
+#### Scripts de verificación
+
+Con la API corriendo y **solo** la semilla de verificación cargada. Cada script cambia datos: vuelva a cargar la semilla antes de correr el siguiente.
+
+| Script | Qué comprueba |
+|---|---|
+| `scripts/verificar-a1-a3.mjs` | Inicio de sesión, middleware, clientes y cartera, con peticiones simultáneas (S8) |
+| `scripts/verificar-a4.mjs` | Cotizaciones, productos, etapas (D1), cambios simultáneos de etapa; con `--seed`, también RS-1 |
+| `scripts/verificar-a5.mjs` | Seguimientos, fechas con zona horaria y `vencida` |
+| `scripts/verificar-a6.mjs` | Resumen del mes con las cifras de control |
 
 ```bash
 # Git Bash
 cd api
-CLAVE_SEMILLA=Ventas2026 node --env-file=.env scripts/verificar-a1-a3.mjs
+CLAVE_SEMILLA=Ventas2026 node --env-file=.env scripts/verificar-a4.mjs
 ```
 
 ```powershell
 # PowerShell
 cd api
 $env:CLAVE_SEMILLA = "Ventas2026"
-node --env-file=.env scripts/verificar-a1-a3.mjs
+node --env-file=.env scripts/verificar-a4.mjs
 ```
-
-| Método | Ruta | Estado |
-|---|---|---|
-| POST | /auth/login | Hecho |
-| GET | /productos | Hecho |
-| GET | /clientes?q= | Hecho |
-| POST | /clientes | Hecho |
-| GET | /clientes/disponibles | Hecho |
-| POST | /clientes/:id/tomar | Hecho |
-| GET | /clientes/:id | Hecho |
-| PATCH | /clientes/:id | Hecho |
-| POST | /clientes/:id/actividades | Pendiente |
-| GET | /actividades?estado= | Pendiente |
-| PATCH | /actividades/:id | Pendiente |
-| GET | /oportunidades?etapa= | Pendiente |
-| POST | /oportunidades | Pendiente |
-| GET | /oportunidades/:id | Pendiente |
-| PATCH | /oportunidades/:id | Pendiente |
-| PATCH | /oportunidades/:id/etapa | Pendiente |
-| POST | /oportunidades/:id/productos | Pendiente |
-| PATCH | /oportunidades/:id/productos/:lineaId | Pendiente |
-| DELETE | /oportunidades/:id/productos/:lineaId | Pendiente |
-| GET | /reportes/resumen?mes= | Pendiente |
-
-Cuerpos, respuestas y códigos de error: sección 5 de [docs/especificacion.md](docs/especificacion.md).
 
 ### 4. SPA
 
