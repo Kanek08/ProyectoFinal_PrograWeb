@@ -1,0 +1,3403 @@
+{
+  "info": {
+    "name": "CRM CompuPartes Xela · API",
+    "description": "API REST del asesor de ventas (proyecto final de Programación Web, UMES 2026).\n\nAntes de correrla:\n1. Cargue la semilla: `php artisan migrate:fresh --seeder=VerificacionSeeder` (o `--seed` para la carpeta «Regla propia»).\n2. Encienda la API: `npm run dev` en `api/`.\n3. Ejecute primero «Auth → Iniciar sesión · asesora»: guarda el token en {{token}}.\n\nLa colección cambia datos: al terminar, vuelva a cargar la semilla.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "clave",
+      "value": "Ventas2026",
+      "description": "Contraseña pública de la semilla (enunciado, sección 11)."
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tokenDiego",
+      "value": ""
+    },
+    {
+      "key": "tokenAndres",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "POST /auth/login (A1). El primer request guarda el token de Valeria en la variable {{token}}.",
+      "item": [
+        {
+          "name": "Iniciar sesión · asesora (200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"valeria@crm.test\",\n  \"clave\": \"{{clave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Trae token y usuario sin datos internos', () => {",
+                  "  pm.expect(j.token).to.be.a('string');",
+                  "  pm.expect(j.usuario).to.eql({ id: j.usuario.id, nombre: 'Valeria López', correo: 'valeria@crm.test' });",
+                  "});",
+                  "pm.collectionVariables.set('token', j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesión · administrador (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin@crm.test\",\n  \"clave\": \"{{clave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"no puede usar\"));",
+                  "pm.test('Sin token', () => pm.expect(pm.response.json().token).to.be.undefined);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesión · cuenta desactivada (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"ivan@crm.test\",\n  \"clave\": \"{{clave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 403', () => pm.response.to.have.status(403));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesión · contraseña incorrecta (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"valeria@crm.test\",\n  \"clave\": \"otra-clave\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"Correo o contraseña incorrectos.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesión · correo inexistente (401, mismo mensaje)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"nadie@crm.test\",\n  \"clave\": \"{{clave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"Correo o contraseña incorrectos.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesión · sin clave (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"valeria@crm.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.clave', () => pm.expect(pm.response.json().errores).to.have.property('clave'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesión (diego@crm.test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"diego@crm.test\",\n  \"clave\": \"{{clave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('tokenDiego', j.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Listar productos activos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Solo activos (no aparece Licencia anterior)', () => pm.expect(j.map(p => p.nombre)).to.not.include('Licencia anterior'));",
+                  "pm.test('Precios como números', () => j.forEach(p => pm.expect(p.precio).to.be.a('number')));",
+                  "pm.collectionVariables.set('productoId', j.find(p => p.nombre === 'Plan básico').id);",
+                  "pm.collectionVariables.set('productoAvanzadoId', j.find(p => p.nombre === 'Plan avanzado').id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "description": "A3. Los clientes de la cartera del asesor del token.",
+      "item": [
+        {
+          "name": "Listar mi cartera",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Comercial El Quetzal con NIT compacto', () => pm.expect(j.find(c => c.nombre === 'Comercial El Quetzal').nit).to.eql('4521817K'));",
+                  "pm.test('CF para consumidor final', () => pm.expect(j.find(c => c.nombre === 'María Coyoy').nit).to.eql('CF'));",
+                  "pm.collectionVariables.set('clienteId', j.find(c => c.nombre === 'Comercial El Quetzal').id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar por NIT (q=4521817)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes?q=4521817",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Encuentra un cliente', () => pm.expect(pm.response.json()).to.have.lengthOf(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear cliente (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Oficina Contable Xela\",\n  \"nit\": \"CF\",\n  \"telefono\": \"+502 {{telNuevo}}\",\n  \"correo\": \"conta@xela.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Teléfono aleatorio que empieza en 3 para no chocar con las semillas.",
+                  "pm.collectionVariables.set('telNuevo', '3' + String(Math.floor(Math.random() * 1e7)).padStart(7, '0'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test('Teléfono normalizado y NIT CF', () => { pm.expect(j.telefono).to.match(/^3\\d{7}$/); pm.expect(j.nit).to.eql('CF'); });",
+                  "pm.collectionVariables.set('clienteNuevoId', j.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clientes disponibles (solo id y nombre)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes/disponibles",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Solo id y nombre', () => j.forEach(c => pm.expect(Object.keys(c)).to.eql(['id', 'nombre'])));",
+                  "pm.collectionVariables.set('disponibleId', j[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tomar un cliente disponible",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base}}/clientes/{{disponibleId}}/tomar",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Devuelve el cliente', () => pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('disponibleId'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver un cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes/{{clienteId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar un cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes/{{clienteNuevoId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"contabilidad@xela.test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Correo cambiado', () => pm.expect(pm.response.json().correo).to.eql('contabilidad@xela.test'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Actividades",
+      "description": "A5. vence_en debe traer zona horaria; se devuelve en UTC.",
+      "item": [
+        {
+          "name": "Crear seguimiento con zona -06:00 (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes/{{clienteId}}/actividades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"llamada\",\n  \"descripcion\": \"Confirmar entrega de las laptops\",\n  \"vence_en\": \"2030-12-01T10:00:00-06:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test('Guardado y devuelto en UTC', () => pm.expect(j.vence_en).to.eql('2030-12-01T16:00:00.000Z'));",
+                  "pm.test('Pendiente y no vencida', () => { pm.expect(j.completada).to.be.false; pm.expect(j.vencida).to.be.false; });",
+                  "pm.collectionVariables.set('actividadId', j.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar pendientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/actividades?estado=pendiente",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Todas pendientes', () => pm.response.json().forEach(a => pm.expect(a.completada).to.be.false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar completadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/actividades?estado=completada",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Marcar como completada",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/actividades/{{actividadId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completada\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('completada true', () => pm.expect(pm.response.json().completada).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Oportunidades",
+      "description": "A4. Crea una cotización, le agrega productos y la lleva de prospecto a ganada (D1).",
+      "item": [
+        {
+          "name": "Listar mis cotizaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Resumen con probabilidad y total', () => j.forEach(o => { pm.expect(o.probabilidad).to.be.a('number'); pm.expect(o.total).to.be.a('number'); }));",
+                  "pm.collectionVariables.set('opProspectoId', j.find(o => o.titulo === 'Seguimiento anual').id);",
+                  "pm.collectionVariables.set('opRenovacionId', j.find(o => o.titulo === 'Renovación de planes').id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por etapa (ganada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades?etapa=ganada",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Todas ganadas', () => pm.response.json().forEach(o => pm.expect(o.etapa).to.eql('ganada')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detalle con precio guardado e historial",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades/{{opRenovacionId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Total 5650 y Plan avanzado a 2600 (precio cotizado)', () => { pm.expect(j.total).to.eql(5650); pm.expect(j.productos.find(p => p.nombre === 'Plan avanzado').precio_unitario).to.eql(2600); });",
+                  "pm.test('Historial desde la creación', () => pm.expect(j.historial[0].etapa_anterior).to.be.null);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear cotización (201, en prospecto)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "etapa y vendedor_id no están en el contrato: se ignoran (decisión D5).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": {{clienteId}},\n  \"titulo\": \"Laptops para el área de ventas\",\n  \"etapa\": \"ganada\",\n  \"vendedor_id\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test('Nace en prospecto con su registro de historial', () => { pm.expect(j.etapa).to.eql('prospecto'); pm.expect(j.historial).to.have.lengthOf(1); });",
+                  "pm.collectionVariables.set('opId', j.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar título",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Laptops para el equipo de ventas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agregar producto (precio del catálogo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "precio_unitario del cuerpo se ignora: el precio se copia del catálogo (R6).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": {{productoAvanzadoId}},\n  \"cantidad\": 2,\n  \"precio_unitario\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));",
+                  "const j = pm.response.json();",
+                  "pm.test('Precio copiado del catálogo, no el del cuerpo', () => pm.expect(j.productos[0].precio_unitario).to.eql(2750.5));",
+                  "pm.test('Total calculado por el servidor', () => pm.expect(j.total).to.eql(5501));",
+                  "pm.collectionVariables.set('lineaId', j.productos[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar cantidad de una línea",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}/productos/{{lineaId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Total 8251.5', () => pm.expect(pm.response.json().total).to.eql(8251.5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quitar una línea (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base}}/oportunidades/{{opId}}/productos/{{lineaId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 204', () => pm.response.to.have.status(204));",
+                  "pm.test('Sin cuerpo', () => pm.expect(pm.response.text()).to.eql(''));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agregar otro producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": {{productoId}},\n  \"cantidad\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar etapa a calificado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"calificado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Etapa calificado', () => pm.expect(pm.response.json().etapa).to.eql('calificado'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar etapa a propuesta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"propuesta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Etapa propuesta', () => pm.expect(pm.response.json().etapa).to.eql('propuesta'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar etapa a negociación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"negociacion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Etapa negociacion', () => pm.expect(pm.response.json().etapa).to.eql('negociacion'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ganar la cotización",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"ganada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.test('Ganada, 100 % y con fecha de cierre UTC', () => { pm.expect(j.etapa).to.eql('ganada'); pm.expect(j.probabilidad).to.eql(100); pm.expect(j.fecha_cierre).to.match(/Z$/); });",
+                  "pm.test('Historial: creación + 4 cambios', () => pm.expect(j.historial).to.have.lengthOf(5));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Perder con motivo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opProspectoId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"perdida\",\n  \"motivo_perdida\": \"Compró en otra tienda\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Motivo guardado', () => pm.expect(pm.response.json().motivo_perdida).to.eql('Compró en otra tienda'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Resumen de octubre 2026 (cifras de control)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/reportes/resumen?mes=2026-10",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Con la semilla recién cargada: { ventas: 2, total: 9250, pronostico: 2512.88, cartera: { clientes: 3, maximo: 10 } }. Esta colección gana y pierde cotizaciones antes de llegar aquí, por eso solo se comprueban ventas y total (el pronóstico y la cartera cambian)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Octubre de Valeria: 2 ventas por 9250, como números', () => { const j = pm.response.json(); pm.expect(j.mes).to.eql('2026-10'); pm.expect(j.ventas).to.eql(2); pm.expect(j.total).to.eql(9250); pm.expect(j.cartera.maximo).to.eql(10); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resumen del mes actual (sin mes)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/reportes/resumen",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Mes AAAA-MM', () => pm.expect(pm.response.json().mes).to.match(/^\\d{4}-\\d{2}$/));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Errores",
+      "description": "Un ejemplo de cada código de error del contrato (A7). Todas las respuestas son JSON.",
+      "item": [
+        {
+          "name": "400 · JSON mal formado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"nombre\": ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 · sin cuerpo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base}}/oportunidades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 · filtro de etapa que no existe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades?etapa=inventada",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 · filtro de estado que no existe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/actividades?estado=vencida",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 · mes inválido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/reportes/resumen?mes=2026-13",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "401 · sin token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 · cliente inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes/999999",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 · ruta inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/no-existe",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 · teléfono repetido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Duplicado\",\n  \"nit\": \"CF\",\n  \"telefono\": \"5555-1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"teléfono\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 · cliente ya en su cartera",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base}}/clientes/{{clienteId}}/tomar",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 · cotización cerrada",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Otro título\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"cerrada\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 · producto repetido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRepetidoId}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": {{productoId}},\n  \"cantidad\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Prepara una cotización abierta con el Plan básico para repetirlo.",
+                  "const base = pm.collectionVariables.get('base');",
+                  "const auth = { key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') };",
+                  "pm.sendRequest({ url: base + '/oportunidades', method: 'POST', header: [auth, { key: 'Content-Type', value: 'application/json' }],",
+                  "  body: { mode: 'raw', raw: JSON.stringify({ cliente_id: Number(pm.collectionVariables.get('clienteId')), titulo: 'Prueba de producto repetido' }) } }, (e, r) => {",
+                  "  const id = r.json().id;",
+                  "  pm.collectionVariables.set('opRepetidoId', id);",
+                  "  pm.sendRequest({ url: base + '/oportunidades/' + id + '/productos', method: 'POST', header: [auth, { key: 'Content-Type', value: 'application/json' }],",
+                  "    body: { mode: 'raw', raw: JSON.stringify({ producto_id: Number(pm.collectionVariables.get('productoId')), cantidad: 1 }) } }, () => {});",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"ya está\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · cliente con NIT y teléfono inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Prueba\",\n  \"nit\": \"12345678\",\n  \"telefono\": \"1234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.nit', () => pm.expect(pm.response.json().errores).to.have.property('nit'));",
+                  "pm.test('errores.telefono', () => pm.expect(pm.response.json().errores).to.have.property('telefono'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · fecha sin zona horaria",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes/{{clienteId}}/actividades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"llamada\",\n  \"descripcion\": \"Sin zona\",\n  \"vence_en\": \"2026-12-01T10:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.vence_en', () => pm.expect(pm.response.json().errores).to.have.property('vence_en'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · completada no booleana",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/actividades/{{actividadId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"completada\": \"true\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.completada', () => pm.expect(pm.response.json().errores).to.have.property('completada'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · salto de etapa no permitido",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRepetidoId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"ganada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.etapa', () => pm.expect(pm.response.json().errores).to.have.property('etapa'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · perder sin motivo",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRepetidoId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"perdida\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.motivo_perdida', () => pm.expect(pm.response.json().errores).to.have.property('motivo_perdida'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · cantidad fuera de rango",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRepetidoId}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": {{productoAvanzadoId}},\n  \"cantidad\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.cantidad', () => pm.expect(pm.response.json().errores).to.have.property('cantidad'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · producto inactivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRepetidoId}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "El producto 5 es «Licencia anterior», inactivo en la semilla de verificación.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": 5,\n  \"cantidad\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.producto_id', () => pm.expect(pm.response.json().errores).to.have.property('producto_id'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "422 · cotización para un cliente ajeno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": {{clienteDiegoId}},\n  \"titulo\": \"No es mío\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({ url: pm.collectionVariables.get('base') + '/clientes', header: { Authorization: 'Bearer ' + pm.collectionVariables.get('tokenDiego') } },",
+                  "  (e, r) => pm.collectionVariables.set('clienteDiegoId', r.json()[0].id));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 422', () => pm.response.to.have.status(422));",
+                  "pm.test('errores.cliente_id', () => pm.expect(pm.response.json().errores).to.have.property('cliente_id'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Seguridad",
+      "description": "Pruebas de S3, S4, S5 y A2.",
+      "item": [
+        {
+          "name": "Cartera de Diego (guarda un cliente suyo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenDiego}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('clienteDiegoId', pm.response.json()[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "S5 · Valeria lee un cliente de Diego (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes/{{clienteDiegoId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "S5 · Valeria modifica un cliente de Diego (404)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes/{{clienteDiegoId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cambiado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "S5 · Valeria registra un seguimiento a un cliente de Diego (404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/clientes/{{clienteDiegoId}}/actividades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"llamada\",\n  \"descripcion\": \"No es mío\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "S3 · inyección SQL en la búsqueda",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes?q=' OR 1=1 --",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No devuelve clientes', () => pm.expect(pm.response.json()).to.have.lengthOf(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "S4 · respuestas sin datos internos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Sin vendedor_id, user_id, supervisor_id ni password', () => pm.expect(pm.response.text()).to.not.match(/vendedor_id|user_id|supervisor_id|password/));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A2 · token alterado (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/clientes",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}x",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Regla propia",
+      "description": "RS-1 «Cada equipo con su garantía». NECESITA las dos semillas: php artisan migrate:fresh --seed. Con solo la semilla de verificación esta carpeta falla (no existe andres@compupartes.test) y la regla nunca se activa (RS-1.4).",
+      "item": [
+        {
+          "name": "Iniciar sesión (andres@compupartes.test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/auth/login",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"andres@compupartes.test\",\n  \"clave\": \"{{clave}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('tokenAndres', j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Catálogo del sector (guarda equipo, garantía y pieza)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('equipoId', j.find(p => p.categoria === 'equipo').id);",
+                  "pm.collectionVariables.set('garantiaId', j.find(p => p.categoria === 'garantia').id);",
+                  "pm.collectionVariables.set('piezaId', j.find(p => p.categoria === 'pieza').id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cotizaciones en negociación (guarda la del café)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades?etapa=negociacion",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('cafeId', j.find(o => o.titulo === 'Renovación de PCs del café').id);",
+                  "pm.collectionVariables.set('clienteCafeId', j.find(o => o.titulo === 'Renovación de PCs del café').cliente.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.5 · detalle del café (4 equipos, 2 garantías)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades/{{cafeId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set('lineaGarantiaCafe', j.productos.find(l => l.producto_id === Number(pm.collectionVariables.get('garantiaId'))).id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.5 · ganar el café → 409 (rechazada)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{cafeId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"ganada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"Cada equipo necesita su garantía: hay 4 equipos y 2 garantías.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.5 · sigue en negociación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base}}/oportunidades/{{cafeId}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Etapa y fecha de cierre sin cambios', () => { pm.expect(pm.response.json().etapa).to.eql('negociacion'); pm.expect(pm.response.json().fecha_cierre).to.be.null; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.5 · subir las garantías a 4",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{cafeId}}/productos/{{lineaGarantiaCafe}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.5 · ganar el café → 200 (aceptada)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{cafeId}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"ganada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Ganada', () => pm.expect(pm.response.json().etapa).to.eql('ganada'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.1 · nueva cotización",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": {{clienteCafeId}},\n  \"titulo\": \"Tres PCs con una garantía\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('opRs', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.1 · agregar 3 equipos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": {{equipoId}},\n  \"cantidad\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.1 · agregar 1 garantía",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": {{garantiaId}},\n  \"cantidad\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('lineaGarantiaRs', pm.response.json().productos.find(l => l.producto_id === Number(pm.collectionVariables.get('garantiaId'))).id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avanzar a calificado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"calificado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avanzar a propuesta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"propuesta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avanzar a negociacion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"negociacion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.1 · ganar con 3 equipos y 1 garantía → 409",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"ganada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Cuerpo { error }', () => pm.expect(pm.response.json().error).to.be.a('string').and.include(\"Cada equipo necesita su garantía: hay 3 equipos y 1 garantías.\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.2 · subir las garantías a 3",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/productos/{{lineaGarantiaRs}}",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.2 · ganar con 3 equipos y 3 garantías → 200",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"ganada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Ganada con fecha de cierre', () => { pm.expect(pm.response.json().etapa).to.eql('ganada'); pm.expect(pm.response.json().fecha_cierre).to.match(/Z$/); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.3 · cotización solo con piezas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": {{clienteCafeId}},\n  \"titulo\": \"Solo piezas sueltas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('opRs', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.3 · agregar una pieza",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/productos",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"producto_id\": {{piezaId}},\n  \"cantidad\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avanzar a calificado",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"calificado\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avanzar a propuesta",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"propuesta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Avanzar a negociacion",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"negociacion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RS-1.3 · ganar sin equipos → 200 (la regla no aplica)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base}}/oportunidades/{{opRs}}/etapa",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAndres}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etapa\": \"ganada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Código 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
